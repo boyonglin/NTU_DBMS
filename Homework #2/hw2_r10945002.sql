@@ -1,14 +1,17 @@
+/* avoid exists errors */
+DROP DATABASE IF EXISTS MysteryDB;
+
 /* create and use database */
-CREATE DATABASE MysteryDB;
+CREATE DATABASE IF NOT EXISTS MysteryDB;
 USE MysteryDB;
 
-/* info */
+/* student info */
 CREATE TABLE self (
-    StuID varchar(10) NOT NULL,
-    Department varchar(10) NOT NULL,
-    SchoolYear int DEFAULT 1,
-    Name varchar(10) NOT NULL,
-    PRIMARY KEY (StuID)
+    student_id VARCHAR(10) NOT NULL,
+    department VARCHAR(10) NOT NULL,
+    school_year INT DEFAULT 1,
+    name VARCHAR(10) NOT NULL,
+    PRIMARY KEY (student_id)
 );
 
 INSERT INTO self
@@ -36,6 +39,7 @@ CREATE TABLE contact (
     FOREIGN KEY (id) REFERENCES person (person_id)
 );
 
+/* weak entity type */
 CREATE TABLE bank_account (
 	account_type ENUM('checking', 'saving') NOT NULL,
 	account_number INT NOT NULL,
@@ -45,6 +49,7 @@ CREATE TABLE bank_account (
     FOREIGN KEY (person_id) REFERENCES person (person_id)
 );
 
+/* disjoint specialization */
 CREATE TABLE native (
     id_card INT NOT NULL,
     passport INT,
@@ -67,6 +72,7 @@ CREATE TABLE foreigner (
     FOREIGN KEY (person_id, citizenship) REFERENCES person (person_id, citizenship)
 );
 
+/*  union - superclass */
 CREATE TABLE interview (
 	id INT NOT NULL AUTO_INCREMENT,
     name VARCHAR(50) NOT NULL,
@@ -76,6 +82,7 @@ CREATE TABLE interview (
     FOREIGN KEY (person_id) REFERENCES person (person_id)
 );
 
+/* union - superclass */
 CREATE TABLE bakery_security_log (
     id INT NOT NULL AUTO_INCREMENT,
     time TIME NOT NULL,
@@ -84,11 +91,13 @@ CREATE TABLE bakery_security_log (
     PRIMARY KEY (id)
 );
 
+/* union - subclass */
 CREATE TABLE crime_scene_report (
     id INT NOT NULL AUTO_INCREMENT,
     date DATE NOT NULL,
     street VARCHAR(50) NOT NULL,
     description TEXT NOT NULL,
+    /* overlapping specialization */
     description_form SET('text', 'video', 'picture', 'audio'),
     interview_id INT,
     log_id INT,
@@ -138,7 +147,7 @@ INSERT INTO crime_scene_report (date, street, description, description_form, int
 ('2023-03-25', 'Church Street', 'Investigation ongoing at Church Street bakery, no evidence of foul play found yet.', 'text', 2, NULL),
 ('2023-03-25', 'Peachtree Street', 'Police patrolled Peachtree Street, but no unusual activity was observed in the area.', 'text', NULL, NULL);
 
-/* create two views (Each view should be based on two tables.)*/
+/* create two views (Each view should be based on two tables.) */
 CREATE VIEW person_info AS
 SELECT name, phone_number, email, citizenship
 FROM person, contact
@@ -162,4 +171,4 @@ SELECT * FROM person_info;
 SELECT * FROM report_details;
 
 /* drop database */
-DROP DATABASE MysteryDB;
+DROP DATABASE IF EXISTS MysteryDB;
