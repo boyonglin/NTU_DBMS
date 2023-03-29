@@ -22,7 +22,7 @@ SELECT * FROM self;
 
 /* create table */
 CREATE TABLE person (
-    person_id INT NOT NULL AUTO_INCREMENT,
+    person_id INT AUTO_INCREMENT,
     name VARCHAR(50) NOT NULL,
     last_call_id INT,
     citizenship ENUM('native', 'foreigner') NOT NULL,
@@ -30,80 +30,104 @@ CREATE TABLE person (
     FOREIGN KEY (last_call_id) REFERENCES person (person_id)
 );
 
+/* multivalued attribute */
 CREATE TABLE contact (
     id INT NOT NULL,
-    phone_number VARCHAR(32) NOT NULL,
+    phone_number VARCHAR(32) NOT NULL UNIQUE,
     email VARCHAR(256),
-    UNIQUE (phone_number),
-    PRIMARY KEY (id),
     FOREIGN KEY (id) REFERENCES person (person_id)
 );
 
 /* weak entity type */
 CREATE TABLE bank_account (
 	account_type ENUM('checking', 'saving') NOT NULL,
-	account_number INT NOT NULL,
-    creation_year INT NOT NULL,
-    person_id INT NOT NULL,
-    UNIQUE (account_number),
-    FOREIGN KEY (person_id) REFERENCES person (person_id)
+	account_number INT NOT NULL UNIQUE,
+    creation_year INT NOT NULL CHECK (creation_year > 1397),
+    owner_id INT NOT NULL,
+    PRIMARY KEY (owner_id, account_type),
+    FOREIGN KEY (owner_id) REFERENCES person (person_id)
 );
 
 /* disjoint specialization */
 CREATE TABLE native (
-    id_card INT NOT NULL,
+    id_card INT NOT NULL UNIQUE,
     passport INT,
 	license_plate VARCHAR(12),
-    person_id INT NOT NULL,
-    citizenship ENUM('native', 'foreigner') DEFAULT 'native',
-    UNIQUE (person_id),
-    PRIMARY KEY (id_card),
+    person_id INT NOT NULL UNIQUE,
+    citizenship ENUM('native', 'foreigner') DEFAULT 'native' CHECK (citizenship = 'native'),
     FOREIGN KEY (person_id, citizenship) REFERENCES person (person_id, citizenship)
 );
 
 CREATE TABLE foreigner (
-    passport INT NOT NULL,
+    passport INT NOT NULL UNIQUE,
     visa_duration DATE NOT NULL,
 	license_plate VARCHAR(12),
-	person_id INT NOT NULL,
-    citizenship ENUM('native', 'foreigner') DEFAULT 'foreigner',
-    UNIQUE (person_id),
-    PRIMARY KEY (passport),
+	person_id INT NOT NULL UNIQUE,
+    citizenship ENUM('native', 'foreigner') DEFAULT 'foreigner' CHECK (citizenship = 'foreigner'),
     FOREIGN KEY (person_id, citizenship) REFERENCES person (person_id, citizenship)
-);
-
-/*  union - superclass */
-CREATE TABLE interview (
-	id INT NOT NULL AUTO_INCREMENT,
-    name VARCHAR(50) NOT NULL,
-    transcript TEXT NOT NULL,
-    person_id INT NOT NULL,
-    PRIMARY KEY (id),
-    FOREIGN KEY (person_id) REFERENCES person (person_id)
-);
-
-/* union - superclass */
-CREATE TABLE bakery_security_log (
-    id INT NOT NULL AUTO_INCREMENT,
-    time TIME NOT NULL,
-    door_activity ENUM('open', 'close') NOT NULL,
-    license_plate VARCHAR(12),
-    PRIMARY KEY (id)
 );
 
 /* union - subclass */
 CREATE TABLE crime_scene_report (
-    id INT NOT NULL AUTO_INCREMENT,
+    report_id INT AUTO_INCREMENT,
     date DATE NOT NULL,
     street VARCHAR(50) NOT NULL,
     description TEXT NOT NULL,
     /* overlapping specialization */
     description_form SET('text', 'video', 'picture', 'audio'),
-    interview_id INT,
-    log_id INT,
-    PRIMARY KEY (id),
-    FOREIGN KEY (interview_id) REFERENCES interview (id),
-    FOREIGN KEY (log_id) REFERENCES bakery_security_log (id)
+    PRIMARY KEY (report_id)
+);
+
+/*  union - superclass */
+CREATE TABLE interview (
+	interview_id INT AUTO_INCREMENT,
+	person_id INT NOT NULL,
+    transcript TEXT NOT NULL,
+    report_id INT,
+    PRIMARY KEY (interview_id),
+    FOREIGN KEY (person_id) REFERENCES person (person_id),
+    FOREIGN KEY (report_id) REFERENCES crime_scene_report (report_id)
+);
+
+/* union - superclass */
+CREATE TABLE bakery_security_log (
+    log_id INT AUTO_INCREMENT,
+    time TIME NOT NULL,
+    door_activity ENUM('open', 'close') NOT NULL,
+    license_plate VARCHAR(12),
+    report_id INT,
+    PRIMARY KEY (log_id),
+	FOREIGN KEY (report_id) REFERENCES crime_scene_report (report_id)
+);
+
+/* airport relationships */
+CREATE TABLE airport (
+    airport_id INT AUTO_INCREMENT,
+    abbreviation VARCHAR(3) NOT NULL,
+    full_name VARCHAR(50) NOT NULL,
+    city VARCHAR(30) NOT NULL,
+    PRIMARY KEY (airport_id)
+);
+
+CREATE TABLE flight (
+    flight_id VARCHAR(5) NOT NULL,
+    date DATE NOT NULL,
+    time TIME NOT NULL,
+    flying_time INT NOT NULL CHECK (flying_time > 0),
+    depart_airport_id INT NOT NULL,
+    arrive_airport_id INT NOT NULL,
+    PRIMARY KEY (flight_id),
+	FOREIGN KEY (depart_airport_id) REFERENCES airport (airport_id),
+    FOREIGN KEY (arrive_airport_id) REFERENCES airport (airport_id)
+);
+
+CREATE TABLE passenger (
+	flight_id VARCHAR(5) NOT NULL,
+    seat VARCHAR(3) NOT NULL,
+    passport INT NOT NULL,
+    age INT NOT NULL CHECK (age > 6),
+    PRIMARY KEY (flight_id, seat),
+    FOREIGN KEY (flight_id) REFERENCES flight (flight_id)
 );
 
 /* insert */
@@ -118,9 +142,9 @@ INSERT INTO contact VALUES
 (3, '+1-7756761002', 'eleven@mail.com');
 
 INSERT INTO bank_account VALUES
-('checking', '66041982', '1962', 1),
-('saving', '52972669', '1981', 2),
-('saving', '40475899', '1981', 3);
+('checking', '1166041982', '1982', 1),
+('saving', '1152972669', '2001', 2),
+('saving', '1140475899', '2001', 3);
 
 INSERT INTO native (id_card, passport, license_plate, person_id) VALUES
 ('313294194', '554049320', '2106-86-2901', 1),
@@ -129,23 +153,38 @@ INSERT INTO native (id_card, passport, license_plate, person_id) VALUES
 INSERT INTO foreigner (passport, visa_duration, license_plate, person_id) VALUES
 ('688399487', '2028-09-02', '7881-41-6348', 3);
 
-INSERT INTO interview (name, transcript, person_id) VALUES
-('Mike Wheeler', "Interviewer: Can you describe the incident that occurred at the bakery?\n
-Interviewee: Yes, there was a break-in last night. They took cash and pastries, but luckily the CCTV footage captured the culprit.", 2),
-('Mike Wheeler', "Interviewer: Did you recognize the thief in the footage?\n
+INSERT INTO crime_scene_report (date, street, description, description_form) VALUES
+('2023-03-25', 'Church Street', 'Bakery burglarized on Church Street, pastries and cash missing. Suspect entered through the back door, leaving crumbs and evidence behind.', 'video,audio'),
+('2023-03-25', 'Church Street', 'Investigation ongoing at Church Street bakery, no evidence of foul play found yet.', 'text'),
+('2023-03-25', 'Peachtree Street', 'Police patrolled Peachtree Street, but no unusual activity was observed in the area.', 'text');
+
+INSERT INTO interview (person_id, transcript, report_id) VALUES
+(2, "Interviewer: Can you describe the incident that occurred at the bakery?\n
+Interviewee: Yes, there was a break-in last night. They took cash and pastries, but luckily the CCTV footage did not captured the culprit.", 1),
+(2, "Interviewer: Did you recognize the thief in the footage?\n
 Interviewee: No, unfortunately they were wearing a hoodie and a mask, so we couldn't see their face.", 2),
-('Jane Hopper', "Interviewer: Have you reported the incident to the police?\n
-Interviewee: Yes, we filed a report this morning and provided them with the footage. We hope they'll be able to catch the culprit soon.", 3);
+(3, "Interviewer: Have you reported the incident to the police?\n
+Interviewee: Yes, we filed a report this morning and provided them with the footage. We hope they'll be able to catch the culprit soon.", 1);
 
-INSERT INTO bakery_security_log (time, door_activity, license_plate) VALUES
-('14:30:27', 'open', NULL),
-('14:35:09', 'close', NULL),
-('14:35:54', 'open', '7881-41-6348');
+INSERT INTO bakery_security_log (time, door_activity, license_plate, report_id) VALUES
+('14:30:27', 'open', NULL, NULL),
+('14:35:09', 'close', NULL, NULL),
+('14:35:54', 'open', '7881-41-6348', 1);
 
-INSERT INTO crime_scene_report (date, street, description, description_form, interview_id, log_id) VALUES
-('2023-03-25', 'Church Street', 'Bakery burglarized on Church Street, pastries and cash missing. Suspect entered through the back door, leaving crumbs and evidence behind.', 'video,audio', 1, 3),
-('2023-03-25', 'Church Street', 'Investigation ongoing at Church Street bakery, no evidence of foul play found yet.', 'text', 2, NULL),
-('2023-03-25', 'Peachtree Street', 'Police patrolled Peachtree Street, but no unusual activity was observed in the area.', 'text', NULL, NULL);
+INSERT INTO airport (abbreviation, full_name, city) VALUES
+('SFO', 'San Francisco', 'San Francisco'),
+('LAX', 'Los Angeles', 'Los Angeles'),
+('ROC', 'Rochester', 'New York');
+
+INSERT INTO flight VALUES
+('SL158', '2023-02-28', '14:30', '118', '1', '2'),
+('RL583', '2023-02-28', '17:45', '124', '3', '2'),
+('LS164', '2023-03-01', '07:20', '210', '2', '1');
+
+INSERT INTO passenger VALUES
+('SL158', 'H11', '554049320', '41'),
+('SL158', 'D06', '317690617', '26'),
+('LS164', 'A42', '265908209', '32');
 
 /* create two views (Each view should be based on two tables.) */
 CREATE VIEW person_info AS
@@ -154,9 +193,10 @@ FROM person, contact
 WHERE person.person_id = contact.id;
 
 CREATE VIEW report_details AS
-SELECT name as witness, date, time, license_plate, description
-FROM interview, bakery_security_log, crime_scene_report
-WHERE crime_scene_report.interview_id = interview.id AND crime_scene_report.log_id = bakery_security_log.id;
+SELECT GROUP_CONCAT(name) as witness, date, time, license_plate, description
+FROM interview, bakery_security_log, crime_scene_report, person
+WHERE crime_scene_report.report_id = interview.report_id AND crime_scene_report.report_id = bakery_security_log.report_id AND interview.person_id=person.person_id
+GROUP BY date, time, license_plate, description;
 
 /* select from all tables and views */
 SELECT * FROM person;
@@ -167,6 +207,9 @@ SELECT * FROM foreigner;
 SELECT * FROM interview;
 SELECT * FROM bakery_security_log;
 SELECT * FROM crime_scene_report;
+SELECT * FROM airport;
+SELECT * FROM flight;
+SELECT * FROM passenger;
 SELECT * FROM person_info;
 SELECT * FROM report_details;
 
