@@ -1,14 +1,17 @@
+/* avoid exists errors */
+DROP DATABASE IF EXISTS MysteryDB;
+
 /* create and use database */
-CREATE DATABASE MysteryDB;
+CREATE DATABASE IF NOT EXISTS MysteryDB;
 USE MysteryDB;
 
-/* info */
+/* student info */
 CREATE TABLE self (
-    StuID varchar(10) NOT NULL,
-    Department varchar(10) NOT NULL,
-    SchoolYear int DEFAULT 1,
-    Name varchar(10) NOT NULL,
-    PRIMARY KEY (StuID)
+    student_id VARCHAR(10) NOT NULL,
+    department VARCHAR(10) NOT NULL,
+    school_year INT DEFAULT 1,
+    name VARCHAR(10) NOT NULL,
+    PRIMARY KEY (student_id)
 );
 
 INSERT INTO self
@@ -27,6 +30,7 @@ CREATE TABLE person (
     FOREIGN KEY (last_call_id) REFERENCES person (person_id)
 );
 
+/* multivalued attribute */
 CREATE TABLE contact (
     id INT NOT NULL,
     phone_number VARCHAR(32) NOT NULL UNIQUE,
@@ -34,6 +38,7 @@ CREATE TABLE contact (
     FOREIGN KEY (id) REFERENCES person (person_id)
 );
 
+/* weak entity type */
 CREATE TABLE bank_account (
 	account_type ENUM('checking', 'saving') NOT NULL,
 	account_number INT NOT NULL UNIQUE,
@@ -43,6 +48,7 @@ CREATE TABLE bank_account (
     FOREIGN KEY (owner_id) REFERENCES person (person_id)
 );
 
+/* disjoint specialization */
 CREATE TABLE native (
     id_card INT NOT NULL UNIQUE,
     passport INT,
@@ -61,15 +67,18 @@ CREATE TABLE foreigner (
     FOREIGN KEY (person_id, citizenship) REFERENCES person (person_id, citizenship)
 );
 
+/* union - subclass */
 CREATE TABLE crime_scene_report (
     report_id INT AUTO_INCREMENT,
     date DATE NOT NULL,
     street VARCHAR(50) NOT NULL,
     description TEXT NOT NULL,
+    /* overlapping specialization */
     description_form SET('text', 'video', 'picture', 'audio'),
     PRIMARY KEY (report_id)
 );
 
+/*  union - superclass */
 CREATE TABLE interview (
 	interview_id INT AUTO_INCREMENT,
 	person_id INT NOT NULL,
@@ -80,6 +89,7 @@ CREATE TABLE interview (
     FOREIGN KEY (report_id) REFERENCES crime_scene_report (report_id)
 );
 
+/* union - superclass */
 CREATE TABLE bakery_security_log (
     log_id INT AUTO_INCREMENT,
     time TIME NOT NULL,
@@ -90,6 +100,7 @@ CREATE TABLE bakery_security_log (
 	FOREIGN KEY (report_id) REFERENCES crime_scene_report (report_id)
 );
 
+/* airport relationships */
 CREATE TABLE airport (
     airport_id INT AUTO_INCREMENT,
     abbreviation VARCHAR(3) NOT NULL,
