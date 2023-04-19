@@ -1,17 +1,15 @@
-/* avoid exists errors */
-DROP DATABASE IF EXISTS MysteryDB;
-
-/* create and use database */
-CREATE DATABASE IF NOT EXISTS MysteryDB;
+/***** create and use database *****/
+CREATE DATABASE MysteryDB;
 USE MysteryDB;
 
-/* student info */
+
+/***** info *****/
 CREATE TABLE self (
-    student_id VARCHAR(10) NOT NULL,
-    department VARCHAR(10) NOT NULL,
-    school_year INT DEFAULT 1,
-    name VARCHAR(10) NOT NULL,
-    PRIMARY KEY (student_id)
+    StuID varchar(10) NOT NULL,
+    Department varchar(10) NOT NULL,
+    SchoolYear int DEFAULT 1,
+    Name varchar(10) NOT NULL,
+    PRIMARY KEY (StuID)
 );
 
 INSERT INTO self
@@ -20,7 +18,8 @@ VALUES ('r10945002', '生醫電資所', 1, '林柏詠');
 SELECT DATABASE();
 SELECT * FROM self;
 
-/* create table */
+
+/***** table creation and insertion *****/
 CREATE TABLE person (
     person_id INT AUTO_INCREMENT,
     name VARCHAR(50) NOT NULL,
@@ -30,7 +29,6 @@ CREATE TABLE person (
     FOREIGN KEY (last_call_id) REFERENCES person (person_id)
 );
 
-/* multivalued attribute */
 CREATE TABLE contact (
     id INT NOT NULL,
     phone_number VARCHAR(32) NOT NULL UNIQUE,
@@ -38,7 +36,6 @@ CREATE TABLE contact (
     FOREIGN KEY (id) REFERENCES person (person_id)
 );
 
-/* weak entity type */
 CREATE TABLE bank_account (
 	account_type ENUM('checking', 'saving') NOT NULL,
 	account_number INT NOT NULL UNIQUE,
@@ -48,7 +45,6 @@ CREATE TABLE bank_account (
     FOREIGN KEY (owner_id) REFERENCES person (person_id)
 );
 
-/* disjoint specialization */
 CREATE TABLE native (
     id_card INT NOT NULL UNIQUE,
     passport INT,
@@ -67,18 +63,15 @@ CREATE TABLE foreigner (
     FOREIGN KEY (person_id, citizenship) REFERENCES person (person_id, citizenship)
 );
 
-/* union - subclass */
 CREATE TABLE crime_scene_report (
     report_id INT AUTO_INCREMENT,
     date DATE NOT NULL,
     street VARCHAR(50) NOT NULL,
     description TEXT NOT NULL,
-    /* overlapping specialization */
     description_form SET('text', 'video', 'picture', 'audio'),
     PRIMARY KEY (report_id)
 );
 
-/*  union - superclass */
 CREATE TABLE interview (
 	interview_id INT AUTO_INCREMENT,
 	person_id INT NOT NULL,
@@ -89,7 +82,6 @@ CREATE TABLE interview (
     FOREIGN KEY (report_id) REFERENCES crime_scene_report (report_id)
 );
 
-/* union - superclass */
 CREATE TABLE bakery_security_log (
     log_id INT AUTO_INCREMENT,
     time TIME NOT NULL,
@@ -100,7 +92,6 @@ CREATE TABLE bakery_security_log (
 	FOREIGN KEY (report_id) REFERENCES crime_scene_report (report_id)
 );
 
-/* airport relationships */
 CREATE TABLE airport (
     airport_id INT AUTO_INCREMENT,
     abbreviation VARCHAR(3) NOT NULL,
@@ -113,7 +104,6 @@ CREATE TABLE flight (
     flight_id VARCHAR(5) NOT NULL,
     date DATE NOT NULL,
     time TIME NOT NULL,
-    flying_time INT NOT NULL CHECK (flying_time > 0),
     depart_airport_id INT NOT NULL,
     arrive_airport_id INT NOT NULL,
     PRIMARY KEY (flight_id),
@@ -122,12 +112,18 @@ CREATE TABLE flight (
 );
 
 CREATE TABLE passenger (
-	flight_id VARCHAR(5) NOT NULL,
-    seat VARCHAR(3) NOT NULL,
+	seat VARCHAR(3) NOT NULL,
     passport INT NOT NULL,
     age INT NOT NULL CHECK (age > 6),
-    PRIMARY KEY (flight_id, seat),
-    FOREIGN KEY (flight_id) REFERENCES flight (flight_id)
+    PRIMARY KEY (seat)
+);
+
+CREATE TABLE air_ticket (
+	flying_time INT NOT NULL CHECK (flying_time > 0),
+    flight_id VARCHAR(5) NOT NULL,
+    seat VARCHAR(3) NOT NULL,
+    FOREIGN KEY (flight_id) REFERENCES flight (flight_id),
+    FOREIGN KEY (seat) REFERENCES passenger (seat)
 );
 
 /* insert */
@@ -154,9 +150,9 @@ INSERT INTO foreigner (passport, visa_duration, license_plate, person_id) VALUES
 ('688399487', '2028-09-02', '7881-41-6348', 3);
 
 INSERT INTO crime_scene_report (date, street, description, description_form) VALUES
-('2023-03-25', 'Church Street', 'Bakery burglarized on Church Street, pastries and cash missing. Suspect entered through the back door, leaving crumbs and evidence behind.', 'video,audio'),
-('2023-03-25', 'Church Street', 'Investigation ongoing at Church Street bakery, no evidence of foul play found yet.', 'text'),
-('2023-03-25', 'Peachtree Street', 'Police patrolled Peachtree Street, but no unusual activity was observed in the area.', 'text');
+('2023-02-25', 'Church Street', 'Bakery burglarized on Church Street, pastries and cash missing. Suspect entered through the back door, leaving crumbs and evidence behind.', 'video,audio'),
+('2023-02-25', 'Church Street', 'Investigation ongoing at Church Street bakery, no evidence of foul play found yet.', 'text'),
+('2023-02-25', 'Peachtree Street', 'Police patrolled Peachtree Street, but no unusual activity was observed in the area.', 'text');
 
 INSERT INTO interview (person_id, transcript, report_id) VALUES
 (2, "Interviewer: Can you describe the incident that occurred at the bakery?\n
@@ -177,41 +173,113 @@ INSERT INTO airport (abbreviation, full_name, city) VALUES
 ('ROC', 'Rochester', 'New York');
 
 INSERT INTO flight VALUES
-('SL158', '2023-02-28', '14:30', '118', '1', '2'),
-('RL583', '2023-02-28', '17:45', '124', '3', '2'),
-('LS164', '2023-03-01', '07:20', '210', '2', '1');
+('LS164', '2023-02-24', '07:20', '2', '1'),
+('SL158', '2023-02-25', '14:30', '1', '2'),
+('RL583', '2023-02-25', '17:45', '3', '2');
 
 INSERT INTO passenger VALUES
-('SL158', 'H11', '554049320', '41'),
-('SL158', 'D06', '317690617', '26'),
-('LS164', 'A42', '265908209', '32');
+('H11', '554049320', '41'),
+('D06', '317690617', '26'),
+('A42', '265908209', '32');
 
-/* create two views (Each view should be based on two tables.) */
-CREATE VIEW person_info AS
-SELECT name, phone_number, email, citizenship
-FROM person, contact
-WHERE person.person_id = contact.id;
+INSERT INTO air_ticket VALUES
+('118', 'SL158', 'H11'),
+('124', 'SL158', 'D06'),
+('210', 'LS164', 'A42');
 
-CREATE VIEW report_details AS
-SELECT GROUP_CONCAT(name) as witness, date, time, license_plate, description
-FROM interview, bakery_security_log, crime_scene_report, person
-WHERE crime_scene_report.report_id = interview.report_id AND crime_scene_report.report_id = bakery_security_log.report_id AND interview.person_id=person.person_id
-GROUP BY date, time, license_plate, description;
 
-/* select from all tables and views */
-SELECT * FROM person;
-SELECT * FROM contact;
-SELECT * FROM bank_account;
-SELECT * FROM native;
-SELECT * FROM foreigner;
-SELECT * FROM interview;
-SELECT * FROM bakery_security_log;
-SELECT * FROM crime_scene_report;
-SELECT * FROM airport;
-SELECT * FROM flight;
-SELECT * FROM passenger;
-SELECT * FROM person_info;
-SELECT * FROM report_details;
+/***** homework 3 commands *****/
 
-/* drop database */
-DROP DATABASE IF EXISTS MysteryDB;
+/* basic select */
+SELECT * FROM bank_account WHERE account_type = 'saving' AND creation_year = '2001';
+SELECT * FROM airport WHERE abbreviation = 'SFO' OR abbreviation = 'LAX';
+SELECT * FROM person WHERE NOT citizenship = 'foreigner';
+
+/* basic projection */
+SELECT phone_number, email FROM contact;
+
+/* basic rename */
+SELECT iv.interview_id AS iid, iv.person_id AS pid, iv.report_id AS rid
+FROM interview AS iv;
+
+/* union */
+SELECT license_plate FROM native
+UNION
+SELECT license_plate FROM foreigner;
+
+/* equijoin */
+SELECT * FROM bakery_security_log AS log
+JOIN crime_scene_report AS report
+ON log.report_id = report.report_id;
+
+/* natural join */
+SELECT interview_id, name, transcript FROM interview
+NATURAL JOIN person;
+
+/* theta join */
+SELECT DISTINCT csr.date, f.flight_id, f.time FROM crime_scene_report AS csr
+JOIN flight AS f
+ON f.date >= csr.date;
+
+/* three table join */
+SELECT f.date, f.time, p.passport, p.age, t.* FROM air_ticket AS t
+JOIN flight AS f
+ON f.flight_id = t.flight_id
+JOIN passenger AS p
+ON p.seat = t.seat;
+
+/* aggregate */
+SELECT door_activity, COUNT(*), MAX(time), MIN(time)
+FROM bakery_security_log GROUP BY door_activity;
+
+/* aggregate 2 */
+SELECT flight_id, COUNT(*), round(AVG(age), 1) AS 'AVG(age)', SUM(age)
+FROM passenger AS p
+JOIN air_ticket AS t ON p.seat = t.seat
+GROUP BY flight_id
+HAVING AVG(age) > 30;
+
+/* in */
+SELECT * FROM air_ticket
+WHERE flying_time IN (118, 124);
+
+/* in 2 */
+SET @set_values = '118, 124';
+SET @query = CONCAT('SELECT * FROM air_ticket
+                     WHERE flying_time IN (', @set_values, ')');
+PREPARE stmt FROM @query;
+EXECUTE stmt;
+
+/* correlated nested query */
+SELECT * FROM passenger AS p
+WHERE seat IN (
+	SELECT seat
+    FROM air_ticket AS t
+    WHERE flying_time < 180
+);
+
+/* correlated nested query 2 */
+SELECT * FROM passenger AS p
+WHERE EXISTS (
+	SELECT seat
+    FROM air_ticket AS t
+    WHERE p.seat = t.seat AND flying_time < 180
+);
+
+/* bonus 1 */
+SELECT * FROM passenger
+LEFT JOIN native USING(passport)
+LEFT JOIN foreigner USING(passport);
+
+/* bonus 2 */
+SELECT i.transcript
+FROM interview AS i
+WHERE NOT EXISTS (
+    SELECT report_id
+    FROM crime_scene_report AS r
+    WHERE r.report_id = i.report_id AND description_form = 'text'
+);
+
+
+/***** drop database *****/
+DROP DATABASE MysteryDB;

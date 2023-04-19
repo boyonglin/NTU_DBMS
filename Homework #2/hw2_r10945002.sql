@@ -102,7 +102,6 @@ CREATE TABLE flight (
     flight_id VARCHAR(5) NOT NULL,
     date DATE NOT NULL,
     time TIME NOT NULL,
-    flying_time INT NOT NULL CHECK (flying_time > 0),
     depart_airport_id INT NOT NULL,
     arrive_airport_id INT NOT NULL,
     PRIMARY KEY (flight_id),
@@ -111,12 +110,18 @@ CREATE TABLE flight (
 );
 
 CREATE TABLE passenger (
-	flight_id VARCHAR(5) NOT NULL,
-    seat VARCHAR(3) NOT NULL,
+	seat VARCHAR(3) NOT NULL,
     passport INT NOT NULL,
     age INT NOT NULL CHECK (age > 6),
-    PRIMARY KEY (flight_id, seat),
-    FOREIGN KEY (flight_id) REFERENCES flight (flight_id)
+    PRIMARY KEY (seat)
+);
+
+CREATE TABLE air_ticket (
+	flying_time INT NOT NULL CHECK (flying_time > 0),
+    flight_id VARCHAR(5) NOT NULL,
+    seat VARCHAR(3) NOT NULL,
+    FOREIGN KEY (flight_id) REFERENCES flight (flight_id),
+    FOREIGN KEY (seat) REFERENCES passenger (seat)
 );
 
 /* insert */
@@ -143,9 +148,9 @@ INSERT INTO foreigner (passport, visa_duration, license_plate, person_id) VALUES
 ('688399487', '2028-09-02', '7881-41-6348', 3);
 
 INSERT INTO crime_scene_report (date, street, description, description_form) VALUES
-('2023-03-25', 'Church Street', 'Bakery burglarized on Church Street, pastries and cash missing. Suspect entered through the back door, leaving crumbs and evidence behind.', 'video,audio'),
-('2023-03-25', 'Church Street', 'Investigation ongoing at Church Street bakery, no evidence of foul play found yet.', 'text'),
-('2023-03-25', 'Peachtree Street', 'Police patrolled Peachtree Street, but no unusual activity was observed in the area.', 'text');
+('2023-02-25', 'Church Street', 'Bakery burglarized on Church Street, pastries and cash missing. Suspect entered through the back door, leaving crumbs and evidence behind.', 'video,audio'),
+('2023-02-25', 'Church Street', 'Investigation ongoing at Church Street bakery, no evidence of foul play found yet.', 'text'),
+('2023-02-25', 'Peachtree Street', 'Police patrolled Peachtree Street, but no unusual activity was observed in the area.', 'text');
 
 INSERT INTO interview (person_id, transcript, report_id) VALUES
 (2, "Interviewer: Can you describe the incident that occurred at the bakery?\n
@@ -166,14 +171,19 @@ INSERT INTO airport (abbreviation, full_name, city) VALUES
 ('ROC', 'Rochester', 'New York');
 
 INSERT INTO flight VALUES
-('SL158', '2023-02-28', '14:30', '118', '1', '2'),
-('RL583', '2023-02-28', '17:45', '124', '3', '2'),
-('LS164', '2023-03-01', '07:20', '210', '2', '1');
+('LS164', '2023-02-24', '07:20', '2', '1'),
+('SL158', '2023-02-25', '14:30', '1', '2'),
+('RL583', '2023-02-25', '17:45', '3', '2');
 
 INSERT INTO passenger VALUES
-('SL158', 'H11', '554049320', '41'),
-('SL158', 'D06', '317690617', '26'),
-('LS164', 'A42', '265908209', '32');
+('H11', '554049320', '41'),
+('D06', '317690617', '26'),
+('A42', '265908209', '32');
+
+INSERT INTO air_ticket VALUES
+('118', 'SL158', 'H11'),
+('124', 'SL158', 'D06'),
+('210', 'LS164', 'A42');
 
 /* create two views (Each view should be based on two tables.) */
 CREATE VIEW person_info AS
@@ -184,7 +194,9 @@ WHERE person.person_id = contact.id;
 CREATE VIEW report_details AS
 SELECT GROUP_CONCAT(name) as witness, date, time, license_plate, description
 FROM interview, bakery_security_log, crime_scene_report, person
-WHERE crime_scene_report.report_id = interview.report_id AND crime_scene_report.report_id = bakery_security_log.report_id AND interview.person_id=person.person_id
+WHERE crime_scene_report.report_id = interview.report_id
+AND crime_scene_report.report_id = bakery_security_log.report_id
+AND interview.person_id=person.person_id
 GROUP BY date, time, license_plate, description;
 
 /* select from all tables and views */
@@ -199,8 +211,9 @@ SELECT * FROM crime_scene_report;
 SELECT * FROM airport;
 SELECT * FROM flight;
 SELECT * FROM passenger;
+SELECT * FROM air_ticket;
 SELECT * FROM person_info;
 SELECT * FROM report_details;
 
 /* drop database */
-DROP DATABASE IF EXISTS MysteryDB;
+DROP DATABASE MysteryDB;
