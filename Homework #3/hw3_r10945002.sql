@@ -1,5 +1,7 @@
+DROP DATABASE IF EXISTS MysteryDB;
+
 /***** create and use database *****/
-CREATE DATABASE MysteryDB;
+CREATE DATABASE IF NOT EXISTS MysteryDB;
 USE MysteryDB;
 
 
@@ -184,16 +186,17 @@ INSERT INTO passenger VALUES
 
 INSERT INTO air_ticket VALUES
 ('118', 'SL158', 'H11'),
-('124', 'SL158', 'D06'),
+('118', 'SL158', 'D06'),
 ('210', 'LS164', 'A42');
 
 
 /***** homework 3 commands *****/
 
 /* basic select */
-SELECT * FROM bank_account WHERE account_type = 'saving' AND creation_year = '2001';
-SELECT * FROM airport WHERE abbreviation = 'SFO' OR abbreviation = 'LAX';
-SELECT * FROM person WHERE NOT citizenship = 'foreigner';
+SELECT * FROM bank_account
+WHERE (account_type = 'saving' OR account_type = 'checking') 
+AND (creation_year >= '2000' AND creation_year <= '2010')
+AND NOT (owner_id = 2);
 
 /* basic projection */
 SELECT phone_number, email FROM contact;
@@ -251,19 +254,19 @@ PREPARE stmt FROM @query;
 EXECUTE stmt;
 
 /* correlated nested query */
-SELECT * FROM passenger AS p
-WHERE seat IN (
-	SELECT seat
+SELECT * FROM flight AS f
+WHERE flight_id IN (
+	SELECT flight_id
     FROM air_ticket AS t
-    WHERE flying_time < 180
+    WHERE f.flight_id = t.flight_id AND flying_time < 180
 );
 
 /* correlated nested query 2 */
-SELECT * FROM passenger AS p
+SELECT * FROM flight AS f
 WHERE EXISTS (
-	SELECT seat
+	SELECT flight_id
     FROM air_ticket AS t
-    WHERE p.seat = t.seat AND flying_time < 180
+    WHERE f.flight_id = t.flight_id AND flying_time < 180
 );
 
 /* bonus 1 */
