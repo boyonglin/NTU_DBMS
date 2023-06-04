@@ -1,4 +1,3 @@
-./__pycache__
-./vscode
-./UCI/desktop.ini
+__pycache__
+vscode
 desktop.ini
