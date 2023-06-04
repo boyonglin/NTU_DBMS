@@ -4,41 +4,32 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import LabelEncoder
 
-# 讀取 csv 數據到 Pandas DataFrame
-df = pd.read_csv('./UCI/wine-data.csv', header=None)
+def pca_func(df):
+    # PCA analysis
+    pca = PCA(n_components=3)  # specify dimensions for PCA
+    class_var = df['Class']
+    features = df.drop('Class', axis=1)  # Exclude the target variable 'Class' from the trait
+    pca_result = pca.fit_transform(features)
 
-# wine-data
-header = ['Class', 'Alcohol', 'Malicacid', 'Ash', 'Alcalinity_of_ash', 'Magnesium', 'Total_phenols', 'Flavanoids', 'Nonflavanoid_phenols', 'Proanthocyanins', 'Color_intensity', 'Hue', '0D280_0D315_of_diluted_wines', 'Proline']
-# iris-data
-# header = ['Sepal_length', 'Sepal_width', 'Petal_length', 'Petal_width', 'Class']
-# dry-bean-data
-# header = ['Area', 'Perimeter', 'Major_axis_length', 'Minor_axis_length', 'Aspect_ration', 'Eccentricity', 'Convex_area', 'Equiv_diameter', 'Extent', 'Solidity', 'Roundness', 'Compactness', 'Shape_factor_1', 'Shape_factor_2', 'Shape_factor_3', 'Shape_factor_4', 'Class']
-df.columns = header
+    # Convert categorical variables to numerical representations
+    label_encoder = LabelEncoder()
+    class_encoded = label_encoder.fit_transform(class_var)
 
-# 執行 PCA 分析
-pca = PCA(n_components=3)  # 指定 PCA 的維度
-class_var = df['Class']
-features = df.drop('Class', axis=1)  #  從特徵中排除目標變數 Class
-pca_result = pca.fit_transform(features)
+    # explained variance ratio: the percentage of variance that is attributed by each of the selected components
+    explained_variance_ratio = pca.explained_variance_ratio_
+    print('Explained Variance Ratio:', explained_variance_ratio)
 
-# 將類別變數轉換為數值表示
-label_encoder = LabelEncoder()
-class_encoded = label_encoder.fit_transform(class_var)
+    # cumulative explained variance ratio
+    cumulative_explained_variance_ratio = np.cumsum(explained_variance_ratio)
+    print('Cumulative Explained Variance Ratio:', cumulative_explained_variance_ratio)
 
-# 解釋變異性比例
-explained_variance_ratio = pca.explained_variance_ratio_
-print('Explained Variance Ratio:', explained_variance_ratio)
+    # Create DataFrame with principal components
+    df_pca = pd.DataFrame(pca_result, columns=['PC1', 'PC2', 'PC3'])
+    df_pca['Class'] = class_encoded
+    print(df_pca.head())
 
-# 累積解釋變異性比例
-cumulative_explained_variance_ratio = np.cumsum(explained_variance_ratio)
-print('Cumulative Explained Variance Ratio:', cumulative_explained_variance_ratio)
+    # Plot visualization charts using scatter matrix
+    # pd.plotting.scatter_matrix(df_pca, c=df_pca['Class'], figsize=(10, 10), marker='o', hist_kwds={'bins': 20})
+    # plt.show()
 
-# 創建包含主成分的 DataFrame
-df_pca = pd.DataFrame(pca_result, columns=['PC1', 'PC2', 'PC3'])
-df_pca['Target'] = class_encoded
-print(df_pca.head())
-
-# 使用散點矩陣繪製可視化圖表
-pd.plotting.scatter_matrix(df_pca, c=df_pca['Target'], figsize=(10, 10), marker='o', hist_kwds={'bins': 20})
-plt.show()
-
+    return df_pca
