@@ -3,11 +3,12 @@ import pandas as pd
 import PCA
 
 # Read from excel
-file_path = 'example.xlsx'
-wb = xw.Book(file_path)
+# file_path = './example.xlsx'
+# wb = xw.Book(file_path)
+# get the active book
+wb = xw.apps.active.books.active
 ws = wb.sheets['wine-data']
-df = ws.used_range.options(pd.DataFrame, index=False, header=False).value
-# df = wb.range('A1:C10').options(pd.DataFrame, index=False, header=False).value
+df = ws.range((1, 1), (10, 14)).options(pd.DataFrame, index=False, header=False).value
 
 # Set header
 header = ['Class', 'Alcohol', 'Malicacid', 'Ash', 'Alcalinity_of_ash', 'Magnesium', 'Total_phenols', 'Flavanoids', 'Nonflavanoid_phenols', 'Proanthocyanins', 'Color_intensity', 'Hue', '0D280_0D315_of_diluted_wines', 'Proline']  # wine-data
@@ -20,6 +21,11 @@ df_pca = PCA.pca_func(df)
 
 # Write to excel
 wb = xw.Book('example.xlsx')
-wb.sheets.add(name='wine-pca', before=None, after=None)
-sheet = wb.sheets['wine-pca']
+
+sheet_names = [sheet.name for sheet in wb.sheets]
+if 'wine-pca' in sheet_names:
+    sheet = wb.sheets['wine-pca']
+else:
+    sheet = wb.sheets.add(name='wine-pca', before=None, after=None)
+
 sheet.range('A1').options(expand='table').value = df_pca

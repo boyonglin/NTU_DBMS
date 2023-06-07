@@ -15,7 +15,7 @@ def pca_func(df):
     label_encoder = LabelEncoder()
     class_encoded = label_encoder.fit_transform(class_var)
 
-    # explained variance ratio: the percentage of variance that is attributed by each of the selected components
+    # explained variance ratio
     explained_variance_ratio = pca.explained_variance_ratio_
     print('Explained Variance Ratio:', explained_variance_ratio)
 
