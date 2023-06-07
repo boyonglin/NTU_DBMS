@@ -1,0 +1,9 @@
+requirements:
+    MongoDB Shell
+    MongoDB Command Line Database Tools
+
+$PATH
+    /path_to_exe_files
+
+system prompt:
+    mongoimport --uri mongodb+srv://root:<PASSWORD>@homework6.uqfhenw.mongodb.net/hw6 --collection students --type csv --headerline --file ./hw6_files/DBMS_student_list.csv
