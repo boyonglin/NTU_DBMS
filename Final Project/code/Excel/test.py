@@ -10,5 +10,5 @@ output = "Column Range: " + arg1 + " to " + arg2 + "\n"
 output += "Data Range: " + arg3 + " to " + arg4 + "\n"
 
 
-with open(r"D:\Final_Project\test.txt","w") as file:
+with open(r"D:\NTU BEBI\111-2 Course\資料庫系統\NTU_DBMS\Final Project\code\Excel\test.txt","w") as file:
     file.write(output)
