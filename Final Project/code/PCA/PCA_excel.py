@@ -1,6 +1,6 @@
 import xlwings as xw
 import pandas as pd
-import PCA
+import PCA, kNN
 
 # Testing arguments
 arg1 = (1, 1)
@@ -18,14 +18,15 @@ df = df.reset_index(drop=True)
 
 # PCA analysis
 df_pca = PCA.pca_func(df)
+df_test = kNN.knn_func(df_pca)
 
 # Write to excel
 wb = xw.apps.active.books.active
 
 sheet_names = [sheet.name for sheet in wb.sheets]
-if 'wine-pca' in sheet_names:
-    sheet = wb.sheets['wine-pca']
+if 'wine-test' in sheet_names:
+    sheet = wb.sheets['wine-test']
 else:
-    sheet = wb.sheets.add(name='wine-pca', before=None, after=None)
+    sheet = wb.sheets.add(name='wine-test', before=None, after=None)
 
-sheet.range('A1').options(expand='table').value = df_pca
+sheet.range('A1').options(expand='table').value = df_test
