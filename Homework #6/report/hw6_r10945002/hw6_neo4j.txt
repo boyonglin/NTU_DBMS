@@ -1,0 +1,45 @@
+// PART 2
+// TASK 3
+CREATE (g:groups {group: 8})
+WITH g
+MATCH (s1:students {`學號`: 'R10945002'}),
+      (s2:students {`學號`: 'R11945044'}),
+      (s3:students {`學號`: 'R11945005'}),
+      (s4:students {`學號`: 'R11945018'})
+CREATE p1=(s1)-[:MEMBER_OF]->(g),
+       p2=(s2)-[:MEMBER_OF]->(g),
+       p3=(s3)-[:MEMBER_OF]->(g),
+       p4=(s4)-[:MEMBER_OF]->(g)
+RETURN *
+
+
+// PART 3
+// TASK 2
+MATCH hf=(me:students {`學號`: 'R10945002'})-[:HAS_HOBBY]->(h)<-[:HAS_HOBBY]-(other:students)
+MATCH hfh=(other:students)-[:HAS_HOBBY]->(h2)
+RETURN *
+
+// TASK 3
+MATCH p1=(me:students {`學號`: 'R10945002'})-[:HAS_HOBBY]->(h)<-[:HAS_HOBBY]-(hf:students)
+MATCH p2=(hf:students)-[:HAS_HOBBY]->(h2)<-[:HAS_HOBBY]-(foaf:students)
+MATCH p3=(foaf)-[:HAS_HOBBY]->(h3)
+WHERE me <> foaf AND NOT EXISTS((me)-[:HAS_HOBBY]->()-[:HAS_HOBBY]-(foaf))
+RETURN p3
+
+// TASK 4
+MATCH (g:students)-[:HAS_HOBBY]->(h)<-[:HAS_HOBBY]-(foaf2:students)
+WHERE g.`學號` IN ['R11945044', 'R11945005', 'R11945018']
+WITH collect(DISTINCT g) AS gList, collect(DISTINCT foaf2) AS foaf2List
+RETURN [foaf2 IN foaf2List WHERE NOT foaf2 IN gList] AS foaf2
+
+// TASK 5
+MATCH p1=(me:students {`學號`: 'R10945002'})-[:HAS_HOBBY]->(h)<-[:HAS_HOBBY]-(hf:students)
+MATCH p2=(hf:students)-[:HAS_HOBBY]->(h2)<-[:HAS_HOBBY]-(foaf:students)
+MATCH p3=(foaf)-[:HAS_HOBBY]->(h3)
+WHERE me <> foaf AND NOT EXISTS((me)-[:HAS_HOBBY]->()-[:HAS_HOBBY]-(foaf))
+WITH foaf
+
+MATCH (g:students)-[:HAS_HOBBY]->(h)<-[:HAS_HOBBY]-(foaf2:students)
+WHERE g.`學號` IN ['R11945044', 'R11945005', 'R11945018']
+WITH collect(DISTINCT g) AS gList, collect(DISTINCT foaf2) AS foaf2List, collect(DISTINCT foaf) AS foafList
+RETURN [foaf2 IN foaf2List WHERE NOT foaf2 IN gList AND NOT foaf2 IN foafList] AS foaf2
