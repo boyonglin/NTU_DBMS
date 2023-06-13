@@ -16,16 +16,18 @@ header = ws.range(arg1, arg2).value
 df.columns = header
 df = df.reset_index(drop=True)
 
-# PCA analysis
+# PCA & kNN analysis
 df_pca = PCA.pca_func(df)
+df_train, df_test = kNN.knn_func(df_pca)
+df_analysis = pd.concat([df_train, df_test], axis=0)
 
 # Write to excel
 wb = xw.apps.active.books.active
 
 sheet_names = [sheet.name for sheet in wb.sheets]
-if 'wine-pca' in sheet_names:
-    sheet = wb.sheets['wine-pca']
+if 'wine-test' in sheet_names:
+    sheet = wb.sheets['wine-test']
 else:
-    sheet = wb.sheets.add(name='wine-pca', before=None, after=None)
+    sheet = wb.sheets.add(name='wine-test', before=None, after=None)
 
-sheet.range('A1').options(expand='table').value = df_pca
+sheet.range('A1').options(expand='table').value = df_analysis
