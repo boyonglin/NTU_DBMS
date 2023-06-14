@@ -45,5 +45,3 @@ code
    ├─ iris-data.csv
    └─ wine-data.csv
 ```
-
-# Demonstration on youtube
