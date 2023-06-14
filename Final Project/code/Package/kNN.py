@@ -1,12 +1,12 @@
 import pandas as pd
+import random
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import GridSearchCV
 from sklearn import metrics
 import matplotlib.pyplot as plt
 import seaborn as sns
-import random
 
 def knn_func(df_pca):
-    # KNN - split training set and test set
     from sklearn.model_selection import train_test_split
 
     x = df_pca.drop('Class', axis=1).values
@@ -14,23 +14,32 @@ def knn_func(df_pca):
 
     # Generate a random value for random_state
     random_state = random.randint(0, 999)
+    # Split training set and test set
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.3, random_state=random_state, stratify=y)
 
-    # print('train shape: ', x_train.shape)
-    # print('test shape: ', x_test.shape)
+    # Set up the parameter grid for grid search
+    param_grid = {'n_neighbors': [3, 5, 7, 9, 11]}
 
-    # Create a k-nearest neighbors (KNN) model, set the number of neighbors (n_neighbors), select the nearest k points, the default is 5
-    knnModel = KNeighborsClassifier(n_neighbors=3)
-    # Train the model using the training data
-    knnModel.fit(x_train, y_train)
+    # Create a k-nearest neighbors (KNN) model
+    knnModel = KNeighborsClassifier()
+
+    # Perform grid search with cross-validation
+    grid_search = GridSearchCV(knnModel, param_grid, cv=5)
+    grid_search.fit(x_train, y_train)
+
+    # Get the best model and its hyperparameters
+    hyper_model = grid_search.best_estimator_
+    hyper_params = grid_search.best_params_
+
+    print("Best Hyperparameters:", hyper_params)
 
     # Predict on the training data
-    y_train_predicted = knnModel.predict(x_train)
+    y_train_predicted = hyper_model.predict(x_train)
     train_accuracy = metrics.accuracy_score(y_train, y_train_predicted)
     print("Training Accuracy:", train_accuracy)
 
     # Predict on the test data
-    y_test_predicted = knnModel.predict(x_test)
+    y_test_predicted = hyper_model.predict(x_test)
     test_accuracy = metrics.accuracy_score(y_test, y_test_predicted)
     print('Testing Accuracy: ', test_accuracy)
 
