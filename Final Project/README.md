@@ -1,12 +1,27 @@
-# ECSQL
-> Access databases with one button.
+# ECSQL: Access databases with one button
+> This is our final project for conclude the NTU 111-2 DBMS course.
 
 ---
 
-This is our final project for conclude the NTU 111-2 DBMS course.
+## Abstract
 
-# Usage Demo
 
+## Feature
+| Connect MySQL |
+| :---: |
+| <img src="./assets/user.gif" width="800"> |
+
+| Create Table |
+| :---: |
+| <img src="./assets/create.gif" width="800"> |
+
+| Upload Data & Analysis Results |
+| :---: |
+| <img src="./assets/upload.gif" width="800"> |
+
+| Download Table |
+| :---: |
+| <img src="./assets/download.gif" width="800"> |
 
 ## Framework
 - Excel VBA
@@ -29,5 +44,6 @@ code
    ├─ dry-bean-data.csv
    ├─ iris-data.csv
    └─ wine-data.csv
-
 ```
+
+# Demonstration on youtube
