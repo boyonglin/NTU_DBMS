@@ -1,7 +1,8 @@
 import xlwings as xw
 import pandas as pd
-import PCA, kNN
+import PCA, kNN , auto_create_table
 import sys
+import json
 
 # Testing arguments
 arg1 = int(sys.argv[1])  #(10, 1)
@@ -21,6 +22,16 @@ df = df.reset_index(drop=True)
 df_pca = PCA.pca_func(df)
 df_train, df_test = kNN.knn_func(df_pca)
 df_analysis = pd.concat([df_train, df_test], axis=0)
+
+# To mysql
+with open('config.json') as f:
+    config = json.load(f)
+
+host = config['host']
+user = config['user']
+passwd = config['passwd']
+
+auto_create_table.create_table(df_analysis, host=host, user=user, passwd=passwd, table_name='example')
 
 # Write to excel
 wb = xw.apps.active.books.active
