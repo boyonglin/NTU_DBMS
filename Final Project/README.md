@@ -1,7 +1,7 @@
 # ECSQL: Access databases with one button
 > This is our final project to conclude the NTU 111-2 DBMS course.
 
-> LIN BO-YONG, KUO TING-YI, TSENG YU-HSUAN, ZHANG YU-JIE
+> Contributors: LIN BO-YONG, KUO TING-YI, TSENG YU-HSUAN, ZHANG YU-JIE
 
 ---
 
