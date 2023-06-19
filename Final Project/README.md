@@ -1,6 +1,8 @@
 # ECSQL: Access databases with one button
 > This is our final project to conclude the NTU 111-2 DBMS course.
 
+> Contributors: LIN BO-YONG, KUO TING-YI, TSENG YU-HSUAN, ZHANG YU-JIE
+
 ---
 
 ## Abstract
@@ -14,7 +16,7 @@ In summary, this process offers users an optimized methodology for data manageme
 ## Workflow
 <img src="./assets/workflow-bg.png" width="800">
 
-## Feature
+## Features
 | Connect MySQL |
 | :---: |
 | <img src="./assets/user.gif" width="800"> |
@@ -27,10 +29,16 @@ In summary, this process offers users an optimized methodology for data manageme
 | :---: |
 | <img src="./assets/upload.gif" width="800"> |
 
+| Select Table |
+| :---: |
+| <img src="./assets/select.gif" width="800"> |
+
 | Download Table |
 | :---: |
 | <img src="./assets/download.gif" width="800"> |
 
+
+## Results
 | Principal Components         | PC1   | PC2  | PC3  |
 |:---------------------------- |:----- |:---- |:---- |
 | Explained Variance Ratio (%) | 99.81 | 0.17 | 0.01 |
@@ -39,6 +47,10 @@ In summary, this process offers users an optimized methodology for data manageme
 |:--- |:----------------- |:---------------- |
 | kNN | 0.81              | 0.67             |
 
+| B-Tree Index |
+| :---: |
+| <img src="./assets/index.jpg" width="800"> |
+
 ## Framework
 - Excel VBA
 - Python
@@ -46,18 +58,17 @@ In summary, this process offers users an optimized methodology for data manageme
 
 ## Structure
 ```
-code
-├─ Package
-│  ├─ config.json
-│  ├─ ECSQL.xlsm
-│  ├─ example.py
-│  ├─ kNN.py
-│  ├─ PCA.py
-│  ├─ auto_create_table.py
-│  ├─ JsonConverter.bas
-│  └─ worksheet1.cls
-└─ UCI
-   ├─ dry-bean-data.csv
-   ├─ iris-data.csv
-   └─ wine-data.csv
+Package
+ ├─ config.json
+ ├─ ECSQL.xlsm
+ ├─ fun_auto_create_table.py
+ ├─ fun_kNN.py
+ ├─ fun_PCA.py
+ ├─ integrate.py
+ ├─ worksheet1.cls
+ └─ UCI
+    ├─ dry-bean-data.csv
+    ├─ iris-data.csv
+    ├─ wine-data - 30.csv
+    └─ wine-data.csv
 ```

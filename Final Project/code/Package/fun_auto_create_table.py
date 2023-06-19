@@ -6,15 +6,22 @@ def create_table(df,host,user,passwd,table_name):
     cursor = cnx.cursor()
     cursor.execute("CREATE DATABASE IF NOT EXISTS ECSQL")
     cursor.execute("USE ECSQL")
+
+    # Create table
     columns = ', '.join([f"`{column}` VARCHAR(255)" for column in df.columns])
-    create_table_query = f"CREATE TABLE `{table_name}` ({columns}) ENGINE=InnoDB"
-    # cluster_query = f"CREATE INDEX cluster_idx ON `{table_name}` (0);"
-    non_cluster_index = f"CREATE INDEX non_idx ON `{table_name}` (Class, Predict);"
-    
+    create_table_query = f"CREATE TABLE IF NOT EXISTS `{table_name}` ({columns}) ENGINE=InnoDB"
     cursor.execute(create_table_query)
-    # cursor.execute(cluster_query)
-    cursor.execute(non_cluster_index)
-    
+
+    # Check if the index exists, if not, create one
+    non_cluster_index_check = f"SELECT 1 FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = 'ECSQL' AND TABLE_NAME = '{table_name}' AND INDEX_NAME = 'Predict'"
+    create_non_cluster_index = f"CREATE INDEX Predict ON `{table_name}` (Predict)"
+    cursor.execute(non_cluster_index_check)
+    result = cursor.fetchone()
+
+    if not result:
+        cursor.execute(create_non_cluster_index)
+     
+    # Insert value into table
     for _, row in df.iterrows():
         values = ", ".join([f"'{str(value)}'" for value in row])
         insert_query = f"INSERT INTO `{table_name}` VALUES ({values})"

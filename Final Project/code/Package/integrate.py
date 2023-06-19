@@ -1,14 +1,17 @@
 import xlwings as xw
 import pandas as pd
-import PCA, kNN , auto_create_table
+import fun_PCA, fun_kNN , fun_auto_create_table
 import sys
 import json
 
 # Testing arguments
-arg1 = int(sys.argv[1])  #(10, 1)
-arg2 = int(sys.argv[2])  #(10, 14)
-arg3 = int(sys.argv[3])  #(11, 1)
-arg4 = int(sys.argv[4])  #(40, 14)
+arg1 = int(sys.argv[1])
+arg2 = int(sys.argv[2])
+arg3 = int(sys.argv[3])
+arg4 = int(sys.argv[4])
+host = sys.argv[5]
+user = sys.argv[6]
+passwd = sys.argv[7]
 
 # Capture the data
 wb = xw.apps.active.books.active
@@ -19,19 +22,14 @@ df.columns = header
 df = df.reset_index(drop=True)
 
 # PCA & kNN analysis
-df_pca = PCA.pca_func(df)
-df_train, df_test = kNN.knn_func(df_pca)
+df_pca = fun_PCA.pca_func(df)
+df_train, df_test = fun_kNN.knn_func(df_pca)
 df_analysis = pd.concat([df_train, df_test], axis=0)
+df_analysis = df_analysis.reset_index(drop=True)
+df_result = pd.concat([df,df_analysis['Predict']], axis=1)
 
 # To mysql
-with open('config.json') as f:
-    config = json.load(f)
-
-host = config['host']
-user = config['user']
-passwd = config['passwd']
-
-auto_create_table.create_table(df_analysis, host=host, user=user, passwd=passwd, table_name='example')
+fun_auto_create_table.create_table(df_result,host=host,user=user,passwd=passwd,table_name='example')
 
 # Write to excel
 wb = xw.apps.active.books.active

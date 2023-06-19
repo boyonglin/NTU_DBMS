@@ -1,7 +1,20 @@
+VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "工作表1"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = True
+Attribute VB_Exposed = True
+
+
+
+
 Sub Add_UI()
     Dim s As OLEObject
     Dim i As Long
-    Dim ws As Worksheet: Set ws = Sheets("test")
+    Dim ws As Worksheet: Set ws = Sheets("main-sheet")
     Label1 = Array("Server", "UserName", "Password")
     Label2 = Array("Database", "Table")
     TextBox1 = Array("Servertext", "UserNametext", "Passwordtext")
@@ -111,6 +124,7 @@ Sub Add_UI()
                 newLabel.Name = createLabel(i)
             End If
         Next i
+        
 
         For i = LBound(createTextbox) To UBound(createTextbox)
             If Not objectExists(ws, createTextbox(i)) Then
@@ -144,7 +158,7 @@ Sub Add_UI()
     Passwordtext.PasswordChar = "*"
 
     For Each obj In Me.OLEObjects
-        obj.Object.Font.Name = "Arial"
+        obj.Object.Font.Name = "Calibri"
     Next obj
     
 End Sub
@@ -184,8 +198,8 @@ Private Sub Databasetext_LostFocus()
     Set myRS = myCon.Execute("SHOW TABLES;")
     
     While Not myRS.EOF
-        TableName = myRS.Fields(0).Value
-        tabletext.AddItem TableName
+        Table_Name = myRS.Fields(0).Value
+        tabletext.AddItem Table_Name
         myRS.MoveNext
     Wend
     
@@ -198,7 +212,7 @@ End Sub
 
 
 Private Sub tabletext_LostFocus()
-    Worksheets("test").Rows(10).Delete
+    Worksheets("main-sheet").Rows(10).Delete
     On Error GoTo ErrorHandler
     Set myCon = CreateObject("ADODB.Connection")
     myCon.Open "Driver={MySQL ODBC 8.0 UNICODE Driver};Server=" & Servertext.Text & ";Database=" & Databasetext.Text & ";User=" & UserNametext.Text & ";Password=" & Passwordtext.Text & ";Option=3;"
@@ -225,9 +239,8 @@ End Sub
 
 
 Private Sub Download_Click()
-'    Worksheets("test").Rows(11 & ":" & Worksheets("test").Rows.Count).Delete
     Dim exists As Boolean
-
+    ' Find if the worksheet of selected table is exist
     For i = 1 To Worksheets.Count
         If Worksheets(i).Name = tabletext.Text Then
             exists = True
@@ -236,10 +249,11 @@ Private Sub Download_Click()
     Next i
     
     If Not exists Then
-        Worksheets.Add(After:=Worksheets("test")).Name = tabletext.Text
+        Worksheets.Add(After:=Worksheets("main-sheet")).Name = tabletext.Text
     End If
     
-    Worksheets(tabletext.Text).Rows(2 & ":" & Worksheets("test").Rows.Count).Delete
+    ' Download data
+    Worksheets(tabletext.Text).Rows(2 & ":" & Worksheets("main-sheet").Rows.Count).Delete
     On Error GoTo ErrorHandler
     Set myCon = CreateObject("ADODB.Connection")
     myCon.Open "Driver={MySQL ODBC 8.0 UNICODE Driver};Server=" & Servertext.Text & ";Database=" & Databasetext.Text & ";User=" & UserNametext.Text & ";Password=" & Passwordtext.Text & ";Option=3;"
@@ -248,8 +262,8 @@ Private Sub Download_Click()
 
     i = 1
     While Not myRS.EOF
-        TableName = myRS.Fields(0).Value
-        Worksheets(tabletext.Text).Cells(1, i) = TableName
+        Table_Name = myRS.Fields(0).Value
+        Worksheets(tabletext.Text).Cells(1, i) = Table_Name
         i = i + 1
         myRS.MoveNext
     Wend
@@ -282,17 +296,11 @@ Private Sub Upload_Click()
     
     On Error GoTo ErrorHandler
 
-    Set ws = ThisWorkbook.Worksheets("test")
-
-    config_path = ThisWorkbook.path & "\" & "config.json"
+    Set ws = ThisWorkbook.Worksheets("main-sheet")
     
-    Set JsonTS = FSO.OpenTextFile(config_path, ForReading)
-    JsonText = JsonTS.ReadAll
-    JsonTS.Close
-    Set JSON = ParseJson(JsonText)
-    
-    ' Set the path to your Python script
-    scriptPath = ThisWorkbook.path & "\" & JSON("py_script_name")
+    ' Select range of the upload data
+    startRow = 10
+    startColumn = 1
     
     lastRow = ws.Range("A" & Rows.Count).End(xlUp).Row
     lastCol = ws.Cells(11, Columns.Count).End(xlToLeft).Column
@@ -300,18 +308,41 @@ Private Sub Upload_Click()
         MsgBox ("No Data!")
         End
     End If
-    arg1 = "(10,1)"
-    arg2= "(10," & lastCol & ")"
-    arg3 = "(11,1)"
-    arg4 = "(" & lastRow & "," & lastCol & ")"
+
+    arg1 = startRow
+    arg2 = startColumn
+    arg3 = lastRow
+    arg4 = lastCol
     
-    startRow = 10
-    startColumn = 1
 
-    ' Call the Python script with arguments
-    Call shell("python " & scriptPath & " " & arg1 & " " & arg2 & " " & arg3 & " " & arg4)
+    ' Set the path to your Python script
+    config_path = ThisWorkbook.Path & "\" & "config.json"
+    
+    Set JsonTS = FSO.OpenTextFile(config_path, ForReading)
+    JsonText = JsonTS.ReadAll
+    JsonTS.Close
+    Set JSON = ParseJson(JsonText)
+    
+    scriptPath = ThisWorkbook.Path & "\" & JSON("py_script_name")
+    
+    
+    ' Set the waiting bar
+    stb = Application.StatusBar
+    dstb = Application.DisplayStatusBar
 
-    MsgBox ("Data upload successfully")
+    Application.StatusBar = "執行中...請稍後..."
+    
+    
+    ' Execute your python file
+    cmd = "python " & scriptPath & " " & arg1 & " " & arg2 & " " & arg3 & " " & arg4 & " " & JSON("host") & " " & JSON("user") & " " & JSON("passwd")
+    RetVal = RunCmd(cmd, True, 0)
+    Debug.Print (cmd)
+    
+    
+    ' Reset the waiting bar
+    Application.DisplayStatusBar = dstb
+    Application.StatusBar = stb
+
     ws.Rows(11 & ":" & ws.Rows.Count).Delete
     
     Exit Sub
@@ -321,7 +352,7 @@ End Sub
 
 
 Private Sub Delete_All_Click()
-    Worksheets("test").Rows(11 & ":" & Worksheets("test").Rows.Count).Delete
+    Worksheets("main-sheet").Rows(11 & ":" & Worksheets("main-sheet").Rows.Count).Delete
 End Sub
 
 
@@ -337,7 +368,6 @@ Private Sub CREATE_Click()
 
     If Not UBound(attri) = UBound(typ) Then
         MsgBox ("Number of attributes MUST be same as types!!")
-        End
     End If
 
     For i = LBound(attri) To UBound(attri)
@@ -354,7 +384,6 @@ Private Sub CREATE_Click()
     myRS.Open sql, myCon, adOpenStatic
 
     myCon.Close
-    Set myCon = Nothing
 
     MsgBox ("Create table successfully!")
 
@@ -364,6 +393,26 @@ ErrorHandler:
     MsgBox (Err.Description)
 End Sub
 
+Public Function RunCmd(strCMD, Optional waitOnReturn As Boolean = True, Optional windowStyle As Integer = 1)
+    ' Add the reference "Windows Script Host Object Model" to use this function
+    ' strCMD: executed string
+    ' windowStyle: 1-show, 0-not to show
+    ' waitOnReturn: wait for return or not
+    
+    Dim wsh As Object
+    Set wsh = VBA.CreateObject("WScript.Shell")
+    Dim errorCode As Integer
+    errorCode = wsh.Run(strCMD, windowStyle, waitOnReturn)
+
+    If errorCode = 0 Then
+        MsgBox ("Data upload successfully")
+    Else
+        MsgBox "執行錯誤" & vbCrLf & "代碼：" & errorCode & vbCrLf & "執行程式：" & strCMD
+        Exit Function
+    End If
+    Exit Function
+
+End Function
 
 Public Function objectExists(ByRef ws As Worksheet, ByVal someName As String) As Boolean
 
@@ -382,7 +431,7 @@ objectExists_Error:
 End Function
 
 
-Private Sub Archive()
+Sub Archive()
     '1
     On Error GoTo ErrorHandler
     Set myCon = CreateObject("ADODB.Connection")
@@ -390,36 +439,35 @@ Private Sub Archive()
 
     Set myRS = CreateObject("ADODB.Recordset")
     
-    lastRow = Sheets("test").Range("A" & Rows.Count).End(xlUp).Row
-    lastCol = Sheets("test").Cells(10, Columns.Count).End(xlToLeft).Column
+    lastRow = Sheets("main-sheet").Range("A" & Rows.Count).End(xlUp).Row
+    lastCol = Sheets("main-sheet").Cells(11, Columns.Count).End(xlToLeft).Column
     
     For num_row = 11 To lastRow
         sql_prepared = ""
         For num_col = 1 To lastCol
 
             If num_col = lastCol Then
-                sql_prepared = sql_prepared & Cells(num_row, num_col).Value
+                sql_prepared = sql_prepared & "'" & Cells(num_row, num_col).Value & "'"
             Else
-                sql_prepared = sql_prepared & Cells(num_row, num_col).Value & ","
+                sql_prepared = sql_prepared & "'" & Cells(num_row, num_col).Value & "',"
             End If
 
         Next num_col
 
-        sql = "insert into wine1 values (" & sql_prepared & ")"
+        sql = "insert into " & tabletext.Text & " values (" & sql_prepared & ");"
+'        Debug.Print (sql)
         myRS.Open sql, myCon, adOpenStatic
 
     Next num_row
 
     MsgBox ("Data upload successfully")
 
-    Worksheets("test").Rows(11 & ":" & Worksheets("test").Rows.Count).Delete
-    '2
-    ' Set the input values from specific cells
-    Set selectRange = Application.InputBox("Please select the range:", Type:=8)
-    
+    Worksheets("main-sheet").Rows(11 & ":" & Worksheets("main-sheet").Rows.Count).Delete
+'    '2
+'    ' Set the input values from specific cells
+'    Set selectRange = Application.InputBox("Please select the range:", Type:=8)
+'
 Exit Sub
 ErrorHandler:
     MsgBox (Err.Description)
 End Sub
-
-

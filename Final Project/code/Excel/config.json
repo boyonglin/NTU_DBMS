@@ -1,6 +1,0 @@
-{
-    "host": "127.0.0.1",
-    "user": "root",
-    "csv_path": "./UCI/wine-data.csv",
-    "py_script_name": "test.py"
-}
